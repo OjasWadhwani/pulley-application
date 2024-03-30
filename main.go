@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -63,9 +64,22 @@ func convertJSONASCIIArraytoString(encrypted_path string) (string, error) {
 	}
 
 	result := strings.Join(letters, "")
-	fmt.Println("result", fmt.Sprintf("task_%s", result))
+	// fmt.Println("result", fmt.Sprintf("task_%s", result))
 	return fmt.Sprintf("task_%s", result), nil
 }
+
+// Challenge: inserted some non-hex characters: task_4ea91aj110l447h6ba7k439i5gb9e6e8cb015e
+func removeNonHex(input string) string {
+	nonHexString := strings.TrimPrefix(input, "task_")
+
+	// Define a regular expression to match hexadecimal characters
+	re := regexp.MustCompile("[^0-9a-fA-F]+")
+
+	// Remove non-hex characters from the input string
+	return fmt.Sprintf("task_%s", re.ReplaceAllString(nonHexString, ""))
+}
+
+// Challenge: added -8 to ASCII value of each character
 
 func main() {
 	fmt.Println("Hey There, Pulley!")
@@ -96,7 +110,12 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("thirdChallenge", thirdChallenge)
+	path = removeNonHex(thirdChallenge.EncryptedPath)
 
-	// task_505aca9875463c251b4d0ac8b4d8a0b3
+	fourthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("fourthChallenge", fourthChallenge)
 }
