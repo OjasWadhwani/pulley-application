@@ -79,7 +79,28 @@ func removeNonHex(input string) string {
 	return fmt.Sprintf("task_%s", re.ReplaceAllString(nonHexString, ""))
 }
 
-// Challenge: added -8 to ASCII value of each character
+// Challenge: added x to ASCII value of each character: task_)*.],]-0,-1()(+0,,]^+\]-\*[Y)Y]]
+func addXToASCII(input string, buffer int) string {
+	trimmedString := strings.TrimPrefix(input, "task_")
+
+	result := ""
+	for _, char := range trimmedString {
+		newChar := char - rune(buffer)
+		result += string(newChar)
+	}
+
+	return fmt.Sprintf("task_%s", result)
+}
+
+func extractBufferFromMethod(method string) int {
+	words := strings.Fields(method)
+
+	number, _ := strconv.Atoi(words[1])
+
+	return number
+}
+
+// hex decoded, encrypted with XOR, hex encoded again: task_2d7ea6d5368f39e840bc6c8c41fe3c25
 
 func main() {
 	fmt.Println("Hey There, Pulley!")
@@ -111,11 +132,19 @@ func main() {
 	}
 
 	path = removeNonHex(thirdChallenge.EncryptedPath)
-
 	fourthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("fourthChallenge", fourthChallenge)
+	buffer := extractBufferFromMethod(fourthChallenge.EncryptionMethod)
+	path = addXToASCII(fourthChallenge.EncryptedPath, buffer)
+
+	fmt.Printf("buffer and path: %d %s", buffer, path)
+	fifthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("fifthChallenge", fifthChallenge)
 }
