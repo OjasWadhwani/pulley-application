@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	domain = "https://ciphersprint.pulley.com"
-	email  = "ojaswadhwani098@gmail.com"
+	domain     = "https://ciphersprint.pulley.com"
+	email      = "ojaswadhwani098@gmail.com"
+	taskPrefix = "task_"
 )
 
 type Challenge struct {
@@ -44,12 +45,22 @@ func MakeGetRequest(url string) (Challenge, error) {
 	return body, nil
 }
 
-// Challenge: converted to a JSON array of ASCII
-func convertJSONASCIIArraytoString(encrypted_path string) (string, error) {
-	// encrypted_path := "task_[55,56,97,55,101,100,51,54,51,54,52,102,98,100,51,57,52,99,102,97,48,99,56,101,99,50,100,55,57,56,48,51]"
-	arrayString := strings.TrimPrefix(encrypted_path, "task_")
+func trimStringAndTransform(path string, transformFunc func(string) (string, error)) string {
+	trimmedString := strings.TrimPrefix(path, "task_")
 
-	numbersStr := strings.Trim(arrayString, "[]")
+	modifiedString, err := transformFunc(trimmedString)
+	if err != nil {
+		panic(err)
+	}
+
+	return fmt.Sprintf("%s%s", taskPrefix, modifiedString)
+}
+
+// Challenge: converted to a JSON array of ASCII
+func convertJSONASCIIArraytoString(encryption string) (string, error) {
+	// encrypted_path := "task_[55,56,97,55,101,100,51,54,51,54,52,102,98,100,51,57,52,99,102,97,48,99,56,101,99,50,100,55,57,56,48,51]"
+
+	numbersStr := strings.Trim(encryption, "[]")
 	numbers := strings.Split(numbersStr, ",")
 
 	var letters []string
@@ -64,22 +75,17 @@ func convertJSONASCIIArraytoString(encrypted_path string) (string, error) {
 	}
 
 	result := strings.Join(letters, "")
-	// fmt.Println("result", fmt.Sprintf("task_%s", result))
-	return fmt.Sprintf("task_%s", result), nil
+	return result, nil
 }
 
 // Challenge: inserted some non-hex characters: task_4ea91aj110l447h6ba7k439i5gb9e6e8cb015e
-func removeNonHex(input string) string {
-	nonHexString := strings.TrimPrefix(input, "task_")
-
+func removeNonHex(encryption string) (string, error) {
 	// Define a regular expression to match hexadecimal characters
 	re := regexp.MustCompile("[^0-9a-fA-F]+")
 
 	// Remove non-hex characters from the input string
-	return fmt.Sprintf("task_%s", re.ReplaceAllString(nonHexString, ""))
+	return re.ReplaceAllString(encryption, ""), nil
 }
-
-// Challenge: added -8 to ASCII value of each character
 
 func main() {
 	fmt.Println("Hey There, Pulley!")
@@ -100,17 +106,15 @@ func main() {
 	}
 
 	encrypted_path = secondChallenge.EncryptedPath
-	path, err = convertJSONASCIIArraytoString(encrypted_path)
-	if err != nil {
-		panic(err)
-	}
+	path = trimStringAndTransform(encrypted_path, convertJSONASCIIArraytoString)
 
 	thirdChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
 		panic(err)
 	}
 
-	path = removeNonHex(thirdChallenge.EncryptedPath)
+	encrypted_path = thirdChallenge.EncryptedPath
+	path = trimStringAndTransform(encrypted_path, removeNonHex)
 
 	fourthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
