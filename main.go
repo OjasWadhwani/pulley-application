@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -101,6 +102,41 @@ func extractBufferFromMethod(method string) int {
 }
 
 // hex decoded, encrypted with XOR, hex encoded again: task_2d7ea6d5368f39e840bc6c8c41fe3c25
+// key seems to be secret
+func xorDecrypt(data []byte, key []byte) []byte {
+	decrypted := make([]byte, len(data))
+	for i := 0; i < len(data); i++ {
+		decrypted[i] = data[i] ^ key[i%len(key)]
+	}
+	return decrypted
+}
+
+func decodeDecryptEncode(input string) (string, error) {
+	trimmedString := strings.TrimPrefix(input, "task_")
+
+	// Decode with hex
+	decodedBytes, err := hex.DecodeString(trimmedString)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println("decodedBytes", decodedBytes)
+
+	keyStr := "secret"
+
+	// Decrypt with XOR
+	decryptedData := xorDecrypt(decodedBytes, []byte(keyStr))
+
+	fmt.Println("decryptedData", decryptedData)
+
+	// Encode with hex
+	originalString := hex.EncodeToString(decryptedData)
+
+	fmt.Println("originalString", originalString)
+	return fmt.Sprintf("task_%s", originalString), nil
+}
+
+// task_1834beed3b41e5e333a6d4d8512f742b scrambled! original positions as base64 encoded messagepack: 3AAgAxcMCgEWBhoICQACHxwUHRELDRkPBRgEHhITBxsQFQ4=
 
 func main() {
 	fmt.Println("Hey There, Pulley!")
@@ -140,11 +176,17 @@ func main() {
 	buffer := extractBufferFromMethod(fourthChallenge.EncryptionMethod)
 	path = addXToASCII(fourthChallenge.EncryptedPath, buffer)
 
-	fmt.Printf("buffer and path: %d %s", buffer, path)
+	// fmt.Printf("buffer and path: %d %s", buffer, path)
 	fifthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("fifthChallenge", fifthChallenge)
+	path, err = decodeDecryptEncode(fifthChallenge.EncryptedPath)
+	sixthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("sixthChallenge", sixthChallenge)
 }
