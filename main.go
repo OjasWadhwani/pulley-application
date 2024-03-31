@@ -10,9 +10,8 @@ import (
 )
 
 const (
-	domain     = "https://ciphersprint.pulley.com"
-	email      = "ojaswadhwani098@gmail.com"
-	taskPrefix = "task_"
+	domain = "https://ciphersprint.pulley.com"
+	email  = "ojaswadhwani098@gmail.com"
 )
 
 type Challenge struct {
@@ -45,22 +44,12 @@ func MakeGetRequest(url string) (Challenge, error) {
 	return body, nil
 }
 
-func trimStringAndTransform(path string, transformFunc func(string) (string, error)) string {
-	trimmedString := strings.TrimPrefix(path, "task_")
-
-	modifiedString, err := transformFunc(trimmedString)
-	if err != nil {
-		panic(err)
-	}
-
-	return fmt.Sprintf("%s%s", taskPrefix, modifiedString)
-}
-
 // Challenge: converted to a JSON array of ASCII
-func convertJSONASCIIArraytoString(encryption string) (string, error) {
+func convertJSONASCIIArraytoString(encrypted_path string) (string, error) {
 	// encrypted_path := "task_[55,56,97,55,101,100,51,54,51,54,52,102,98,100,51,57,52,99,102,97,48,99,56,101,99,50,100,55,57,56,48,51]"
+	arrayString := strings.TrimPrefix(encrypted_path, "task_")
 
-	numbersStr := strings.Trim(encryption, "[]")
+	numbersStr := strings.Trim(arrayString, "[]")
 	numbers := strings.Split(numbersStr, ",")
 
 	var letters []string
@@ -75,17 +64,22 @@ func convertJSONASCIIArraytoString(encryption string) (string, error) {
 	}
 
 	result := strings.Join(letters, "")
-	return result, nil
+	// fmt.Println("result", fmt.Sprintf("task_%s", result))
+	return fmt.Sprintf("task_%s", result), nil
 }
 
 // Challenge: inserted some non-hex characters: task_4ea91aj110l447h6ba7k439i5gb9e6e8cb015e
-func removeNonHex(encryption string) (string, error) {
+func removeNonHex(input string) string {
+	nonHexString := strings.TrimPrefix(input, "task_")
+
 	// Define a regular expression to match hexadecimal characters
 	re := regexp.MustCompile("[^0-9a-fA-F]+")
 
 	// Remove non-hex characters from the input string
-	return re.ReplaceAllString(encryption, ""), nil
+	return fmt.Sprintf("task_%s", re.ReplaceAllString(nonHexString, ""))
 }
+
+// Challenge: added -8 to ASCII value of each character
 
 func main() {
 	fmt.Println("Hey There, Pulley!")
@@ -106,15 +100,17 @@ func main() {
 	}
 
 	encrypted_path = secondChallenge.EncryptedPath
-	path = trimStringAndTransform(encrypted_path, convertJSONASCIIArraytoString)
+	path, err = convertJSONASCIIArraytoString(encrypted_path)
+	if err != nil {
+		panic(err)
+	}
 
 	thirdChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
 		panic(err)
 	}
 
-	encrypted_path = thirdChallenge.EncryptedPath
-	path = trimStringAndTransform(encrypted_path, removeNonHex)
+	path = removeNonHex(thirdChallenge.EncryptedPath)
 
 	fourthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
