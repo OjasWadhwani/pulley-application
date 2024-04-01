@@ -15,7 +15,6 @@ import (
 
 const (
 	domain = "https://ciphersprint.pulley.com"
-	email  = "ojaswadhwani098@gmail.com"
 )
 
 type Challenge struct {
@@ -169,6 +168,18 @@ func UnscramblePath(input string, base64MessagePack string) (string, error) {
 func main() {
 	fmt.Println("Hey There, Pulley!")
 	//https://ciphersprint.pulley.com/task_7f3671e3cf343511fe14a4f81f8dd50
+
+	var email string
+
+	// Prompt the user to enter an email address
+	fmt.Print("Enter your email address for the challenge: ")
+
+	// Read the input from the user
+	_, err := fmt.Scanln(&email)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 
 	firstChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, email))
 	if err != nil {
