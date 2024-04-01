@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/vmihailenco/msgpack"
 )
 
 const (
@@ -132,11 +135,44 @@ func decodeDecryptEncode(input string) (string, error) {
 	// Encode with hex
 	originalString := hex.EncodeToString(decryptedData)
 
-	fmt.Println("originalString", originalString)
 	return fmt.Sprintf("task_%s", originalString), nil
 }
 
+func extractMessagePackFromEncryptionMethod(encryptionMethod string) (string, error) {
+	strs := strings.Fields(encryptionMethod)
+	return strs[len(strs)-1], nil
+}
+
 // task_1834beed3b41e5e333a6d4d8512f742b scrambled! original positions as base64 encoded messagepack: 3AAgAxcMCgEWBhoICQACHxwUHRELDRkPBRgEHhITBxsQFQ4=
+func UnscramblePath(input string, base64MessagePack string) (string, error) {
+	trimmedString := strings.TrimPrefix(input, "task_")
+
+	// Decode base64-encoded message pack
+	messagePackBytes, err := base64.StdEncoding.DecodeString(base64MessagePack)
+	if err != nil {
+		return "", err
+	}
+
+	// Unmarshal message pack to obtain original positions
+	var originalPositions []int
+	err = msgpack.Unmarshal(messagePackBytes, &originalPositions)
+	if err != nil {
+		return "", err
+	}
+
+	// Unscramble the message using original positions
+	unscrambledMessage := make([]string, len(trimmedString))
+	for i, index := range originalPositions {
+		unscrambledMessage[index] = string(trimmedString[i])
+	}
+
+	result := strings.Join(unscrambledMessage, "")
+
+	return fmt.Sprintf("task_%s", result), nil
+}
+
+// task_c20b797439715132fe8644f9028c6cfd749fb57a15d4b834d8c28911fef13e5b: hashed with sha256, good luck 10000000s this is a gimmick, there is no way to solve this task
+// :(
 
 func main() {
 	fmt.Println("Hey There, Pulley!")
@@ -183,10 +219,27 @@ func main() {
 	}
 
 	path, err = decodeDecryptEncode(fifthChallenge.EncryptedPath)
+	if err != nil {
+		panic(err)
+	}
 	sixthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("sixthChallenge", sixthChallenge)
+	messagePack, err := extractMessagePackFromEncryptionMethod(sixthChallenge.EncryptionMethod)
+	if err != nil {
+		panic(err)
+	}
+
+	path, err = UnscramblePath(sixthChallenge.EncryptedPath, messagePack)
+	if err != nil {
+		panic(err)
+	}
+	seventhChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("seventhChallenge", seventhChallenge)
 }
