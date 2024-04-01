@@ -162,6 +162,18 @@ func UnscramblePath(input string, base64MessagePack string) (string, error) {
 	return fmt.Sprintf("task_%s", result), nil
 }
 
+func printPathHistory(challenge int, encryptedPath string, decodedPath string, encryptionMethod string) {
+	fmt.Println("================================================================================================")
+
+	fmt.Println("Challenge: ", challenge)
+
+	fmt.Println("Encrypted Path: ", encryptedPath)
+
+	fmt.Println("Encrypted Method: ", encryptionMethod)
+
+	fmt.Println("Decoded Path: ", decodedPath)
+}
+
 // task_c20b797439715132fe8644f9028c6cfd749fb57a15d4b834d8c28911fef13e5b: hashed with sha256, good luck 10000000s this is a gimmick, there is no way to solve this task
 // :(
 
@@ -188,6 +200,9 @@ func main() {
 
 	encrypted_path := firstChallenge.EncryptedPath
 	path := encrypted_path
+	encryption_method := firstChallenge.EncryptionMethod
+
+	printPathHistory(1, encrypted_path, path, encryption_method)
 
 	secondChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
@@ -199,48 +214,75 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	encryption_method = secondChallenge.EncryptionMethod
+
+	printPathHistory(2, encrypted_path, path, encryption_method)
 
 	thirdChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
 		panic(err)
 	}
 
-	path = removeNonHex(thirdChallenge.EncryptedPath)
+	encrypted_path = thirdChallenge.EncryptedPath
+	path = removeNonHex(encrypted_path)
+	encryption_method = thirdChallenge.EncryptionMethod
+
+	printPathHistory(3, encrypted_path, path, encryption_method)
+
 	fourthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
 		panic(err)
 	}
 
-	buffer := extractBufferFromMethod(fourthChallenge.EncryptionMethod)
-	path = addXToASCII(fourthChallenge.EncryptedPath, buffer)
+	encrypted_path = fourthChallenge.EncryptedPath
+	encryption_method = fourthChallenge.EncryptionMethod
+
+	buffer := extractBufferFromMethod(encryption_method)
+	path = addXToASCII(encrypted_path, buffer)
+
+	printPathHistory(4, encrypted_path, path, encryption_method)
 
 	fifthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
 		panic(err)
 	}
 
-	path, err = decodeDecryptEncode(fifthChallenge.EncryptedPath)
+	encrypted_path = fifthChallenge.EncryptedPath
+	path, err = decodeDecryptEncode(encrypted_path)
 	if err != nil {
 		panic(err)
 	}
+	encryption_method = fifthChallenge.EncryptionMethod
+
+	printPathHistory(5, encrypted_path, path, encryption_method)
+
 	sixthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
 		panic(err)
 	}
 
-	messagePack, err := extractMessagePackFromEncryptionMethod(sixthChallenge.EncryptionMethod)
+	encrypted_path = sixthChallenge.EncryptedPath
+	encryption_method = sixthChallenge.EncryptionMethod
+
+	messagePack, err := extractMessagePackFromEncryptionMethod(encryption_method)
 	if err != nil {
 		panic(err)
 	}
 
-	path, err = UnscramblePath(sixthChallenge.EncryptedPath, messagePack)
+	path, err = UnscramblePath(encrypted_path, messagePack)
 	if err != nil {
 		panic(err)
 	}
+	printPathHistory(6, encrypted_path, path, encryption_method)
+
 	seventhChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("seventhChallenge", seventhChallenge)
+	encrypted_path = seventhChallenge.EncryptedPath
+	encryption_method = seventhChallenge.EncryptionMethod
+	printPathHistory(7, encrypted_path, ":?", encryption_method)
+
+	fmt.Println("\nThis is the end of task! :)")
 }
