@@ -43,8 +43,6 @@ func MakeGetRequest(url string) (Challenge, error) {
 		return Challenge{}, err
 	}
 
-	fmt.Println("result", body)
-
 	return body, nil
 }
 
@@ -60,7 +58,6 @@ func convertJSONASCIIArraytoString(encrypted_path string) (string, error) {
 	for _, numStr := range numbers {
 		num, err := strconv.Atoi(numStr)
 		if err != nil {
-			fmt.Println("Error converting number:", err)
 			return "", err
 		}
 		letter := string(num)
@@ -68,7 +65,6 @@ func convertJSONASCIIArraytoString(encrypted_path string) (string, error) {
 	}
 
 	result := strings.Join(letters, "")
-	// fmt.Println("result", fmt.Sprintf("task_%s", result))
 	return fmt.Sprintf("task_%s", result), nil
 }
 
@@ -123,14 +119,10 @@ func decodeDecryptEncode(input string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println("decodedBytes", decodedBytes)
-
 	keyStr := "secret"
 
 	// Decrypt with XOR
 	decryptedData := xorDecrypt(decodedBytes, []byte(keyStr))
-
-	fmt.Println("decryptedData", decryptedData)
 
 	// Encode with hex
 	originalString := hex.EncodeToString(decryptedData)
@@ -178,7 +170,6 @@ func main() {
 	fmt.Println("Hey There, Pulley!")
 	//https://ciphersprint.pulley.com/task_7f3671e3cf343511fe14a4f81f8dd50
 
-	// fmt.Println("request url", fmt.Sprintf("%s%s", domain, email))
 	firstChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, email))
 	if err != nil {
 		panic(err)
@@ -212,7 +203,6 @@ func main() {
 	buffer := extractBufferFromMethod(fourthChallenge.EncryptionMethod)
 	path = addXToASCII(fourthChallenge.EncryptedPath, buffer)
 
-	// fmt.Printf("buffer and path: %d %s", buffer, path)
 	fifthChallenge, err := MakeGetRequest(fmt.Sprintf("%s/%s", domain, path))
 	if err != nil {
 		panic(err)
