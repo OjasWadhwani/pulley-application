@@ -3,22 +3,24 @@ Challenge for Pulley: https://www.workatastartup.com/jobs/65612
 
 # Description
 
-# Interview Problem Solutions by Ojas Wadhwani
+### Interview Problem Solutions by Ojas Wadhwani
 
 ## Introduction
-Hello! I'm [Ojas Wadhwani]{https://github.com/OjasWadhwani}, and I tackled the [interview problem](https://ciphersprint.pulley.com/) for Pulley for the [Job role]{https://www.workatastartup.com/jobs/65612}. Below are the solutions to the seven challenges presented.
+Hello! I'm [Ojas Wadhwani](https://github.com/OjasWadhwani), and I tackled the [interview problem](https://ciphersprint.pulley.com/) for Pulley for the above job role. Below are the solutions to the seven challenges presented.
 
 ## Email Input
 To start the challenge, I entered my email address:
 
 ![alt text](image.png)
 
-Once this is done, the script written in this repository solves the consecutive challenges by extracting the request path and making a `GET` request to get the next:
+Once this is done, the script written in [main.go](https://github.com/OjasWadhwani/pulley-application/blob/main/main.go) solves the consecutive challenges by extracting the request path and making a `GET` request to get the next:
 
 ![alt text](image-1.png)
 
 ## Challenge Solutions
-The solutions are implemented in Go. Each challenge had some basic steps of extracting the `encryption_method` and `encryption_path`, removing the `task_` prefix and executing the custom logic to decrypt the string. Some of the challenges required to extract information from `encryption_method`. Here's a breakdown of the challenges along with their encryption methods and explanations:
+The solutions are implemented in Go. Each challenge had some basic steps of extracting the `encryption_method` and `encryption_path`, removing the `task_` prefix and executing the custom logic to decrypt the string. 
+
+Some of the challenges required to extract information from `encryption_method`. Here's a breakdown of the challenges along with their encryption methods and explanations:
 
 | Challenge No. | Encryption Method                                 | Explanation                                                           | Commit                                                                                                         |
 |---------------|---------------------------------------------------|-----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
